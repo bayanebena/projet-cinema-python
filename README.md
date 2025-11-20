@@ -1,6 +1,6 @@
 # Projet Python S1 – Application de Gestion de Cinéma
 
-Ce dépôt contient la partie réalisée par la Personne 1, dédiée à la gestion des films et des salles dans le cadre du projet de cinéma du module Python S1.
+Ce dépôt contient la partie réalisée par la Bayane, dédiée à la gestion des films et des salles dans le cadre du projet de cinéma du module Python S1.
 
 ## Objectifs du projet
 
