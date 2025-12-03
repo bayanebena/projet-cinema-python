@@ -69,3 +69,13 @@ if __name__ == "__main__":
     print("Films enregistrés :")
     for f in gestion.lister_films():
         print(" -", f)
+
+
+# ---------------------------------------------------------------------
+# Données initiales disponibles pour d'autres modules (ex : main.py)
+# ---------------------------------------------------------------------
+
+films_par_defaut = GestionFilms()
+films_par_defaut.ajouter_film(Film("Inception", 148, "Science-fiction"))
+films_par_defaut.ajouter_film(Film("Avatar", 162, "Aventure"))
+films_par_defaut.ajouter_film(Film("Le Roi Lion", 88, "Animation"))
