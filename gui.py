@@ -5,6 +5,7 @@ from salle import GestionSalles, SalleInexistanteError
 from reservation import GestionSeances, SallePleineError
 import os
 from film import charger_films_csv
+from salle import salles_par_defaut
 
 class CinemaApp:
     def __init__(self, root):
@@ -12,9 +13,26 @@ class CinemaApp:
         self.root.title("Cinéma - Application Graphique")
         chemin_csv = os.path.join(os.path.dirname(__file__), "films_init.csv")
         self.gestion_films = charger_films_csv(chemin_csv)
-        self.gestion_salles = GestionSalles()
+        self.gestion_salles = salles_par_defaut()
         self.gestion_seances = GestionSeances()
+        self.creer_seances_par_defaut()
         self.menu_principal()
+
+    def creer_seances_par_defaut(self):
+        films = self.gestion_films.lister_films()
+        salles = self.gestion_salles.lister_salles()
+        horaires = [
+            "2025-12-10 18:00",
+            "2025-12-10 20:00",
+            "2025-12-11 18:00",
+            "2025-12-11 20:00",
+            "2025-12-12 21:00"
+        ]
+        for i in range(min(5, len(films), len(salles))):
+            try:
+                self.gestion_seances.creer_seance(films[i], salles[i], horaires[i])
+            except Exception:
+                pass
 
     def menu_principal(self):
         self.clear()
@@ -27,7 +45,6 @@ class CinemaApp:
         self.clear()
         tk.Label(self.root, text="Menu Client", font=("Arial", 14)).pack(pady=10)
         tk.Button(self.root, text="Voir les films à l'affiche", width=30, command=self.afficher_films).pack(pady=5)
-        tk.Button(self.root, text="Réserver une place", width=30, command=self.reserver_place).pack(pady=5)
         tk.Button(self.root, text="Voir les séances", width=30, command=self.afficher_seances).pack(pady=5)
         tk.Button(self.root, text="Retour", width=30, command=self.menu_principal).pack(pady=5)
 
@@ -60,13 +77,80 @@ class CinemaApp:
     def afficher_seances(self):
         self.clear()
         tk.Label(self.root, text="Séances", font=("Arial", 14)).pack(pady=10)
-        seances = self.gestion_seances.lister_seances()
+        # On ne garde que les séances dont le film existe encore
+        films_existants = set(f.titre for f in self.gestion_films.lister_films())
+        seances = [s for s in self.gestion_seances.lister_seances() if s.film.titre in films_existants]
         if not seances:
             tk.Label(self.root, text="Aucune séance disponible.").pack()
         else:
+            tk.Label(self.root, text="Cliquez sur une séance pour voir le plan de salle et réserver :", font=("Arial", 10)).pack(pady=5)
             for s in seances:
-                tk.Label(self.root, text=str(s)).pack()
+                tk.Button(self.root, text=str(s), wraplength=400, command=lambda seance=s: self.afficher_plan_salle(seance)).pack(pady=2, fill='x')
         tk.Button(self.root, text="Retour", command=self.menu_client).pack(pady=10)
+
+    def afficher_plan_salle(self, seance):
+        self.clear()
+        tk.Label(self.root, text=f"Plan de la salle {seance.salle.numero} - {seance.film.titre}", font=("Arial", 13)).pack(pady=5)
+        tk.Label(self.root, text=f"Horaire : {seance.horaire}", font=("Arial", 10)).pack(pady=2)
+        plan = seance.plan
+        frame = tk.Frame(self.root)
+        frame.pack(pady=10)
+        colonnes = max(len(row) for row in plan) if plan else 0
+        # Affichage de la numérotation des colonnes en haut
+        for j in range(colonnes):
+            tk.Label(frame, text=str(j+1), width=4, height=2, font=("Arial", 9, "bold")).grid(row=0, column=j+1)
+        # Affichage du plan avec lettres à gauche
+        for i, row in enumerate(plan):
+            # Lettre de la rangée à gauche
+            tk.Label(frame, text=chr(65+i), width=4, height=2, font=("Arial", 9, "bold")).grid(row=i+1, column=0)
+            for j, place in enumerate(row):
+                couleur = "green" if seance.est_place_disponible(place) else "red"
+                etat = tk.NORMAL if seance.est_place_disponible(place) else tk.DISABLED
+                btn = tk.Button(frame, text="", width=4, height=2, bg=couleur, fg="white", state=etat,
+                                command=lambda p=place: self.reserver_place_graphique(seance, p))
+                btn.grid(row=i+1, column=j+1, padx=2, pady=2)
+        # Ajout de la légende du code couleur
+        legend_frame = tk.Frame(self.root)
+        legend_frame.pack(pady=5)
+        tk.Label(legend_frame, text="", width=2, height=1, bg="green").pack(side=tk.LEFT, padx=2)
+        tk.Label(legend_frame, text=": disponible", font=("Arial", 10)).pack(side=tk.LEFT)
+        tk.Label(legend_frame, text="", width=2, height=1, bg="red").pack(side=tk.LEFT, padx=10)
+        tk.Label(legend_frame, text=": réservée", font=("Arial", 10)).pack(side=tk.LEFT)
+        tk.Button(self.root, text="Retour", command=self.afficher_seances).pack(pady=10)
+
+    def reserver_place_graphique(self, seance, place):
+        confirm = messagebox.askyesno("Confirmation", f"Voulez-vous réserver la place {place} ?")
+        if not confirm:
+            return
+        client_nom = simpledialog.askstring("Réservation", f"Votre nom pour la place {place} :")
+        if not client_nom:
+            messagebox.showerror("Erreur", "Le nom ne peut pas être vide.")
+            return
+        try:
+            reservation = seance.reserver(client_nom, place)
+            messagebox.showinfo("Succès", f"Réservation confirmée : {reservation}")
+            self.afficher_plan_salle(seance)
+        except SallePleineError as e:
+            messagebox.showerror("Erreur", str(e))
+        except Exception as e:
+            messagebox.showerror("Erreur", str(e))
+
+    def reserver_depuis_seance(self, seance):
+        client_nom = simpledialog.askstring("Réservation", "Votre nom:")
+        try:
+            nb_places = simpledialog.askinteger("Réservation", "Nombre de places:")
+            if nb_places is None or nb_places <= 0:
+                raise ValueError("Le nombre de places doit être un entier strictement positif.")
+        except Exception:
+            messagebox.showerror("Erreur", "Entrée invalide pour le nombre de places : un entier strictement positif est attendu.")
+            return
+        try:
+            reservation = seance.reserver(client_nom, nb_places)
+            messagebox.showinfo("Succès", f"Réservation confirmée: {reservation}")
+        except SallePleineError as e:
+            messagebox.showerror("Erreur", str(e))
+        except Exception as e:
+            messagebox.showerror("Erreur", str(e))
 
     def reserver_place(self):
         seances = self.gestion_seances.lister_seances()
@@ -172,6 +256,18 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def affecter_film_salle(self):
+        films = self.gestion_films.lister_films()
+        salles = self.gestion_salles.lister_salles()
+        if not films:
+            messagebox.showinfo("Info", "Aucun film disponible à affecter.")
+            return
+        if not salles:
+            messagebox.showinfo("Info", "Aucune salle disponible pour l'affectation.")
+            return
+        films_str = "\n".join(str(f) for f in films)
+        salles_str = "\n".join(str(s) for s in salles)
+        messagebox.showinfo("Films existants", f"Films enregistrés :\n{films_str}")
+        messagebox.showinfo("Salles existantes", f"Salles enregistrées :\n{salles_str}")
         numero = simpledialog.askinteger("Affecter Film", "Numéro de la salle:")
         titre = simpledialog.askstring("Affecter Film", "Titre du film:")
         try:
@@ -189,6 +285,18 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def creer_seance(self):
+        films = self.gestion_films.lister_films()
+        salles = self.gestion_salles.lister_salles()
+        if not films:
+            messagebox.showinfo("Info", "Aucun film disponible pour créer une séance.")
+            return
+        if not salles:
+            messagebox.showinfo("Info", "Aucune salle disponible pour créer une séance.")
+            return
+        films_str = "\n".join(str(f) for f in films)
+        salles_str = "\n".join(str(s) for s in salles)
+        messagebox.showinfo("Films existants", f"Films enregistrés :\n{films_str}")
+        messagebox.showinfo("Salles existantes", f"Salles enregistrées :\n{salles_str}")
         titre = simpledialog.askstring("Créer Séance", "Titre du film:")
         try:
             numero = simpledialog.askinteger("Créer Séance", "Numéro de la salle:")
@@ -208,6 +316,7 @@ class CinemaApp:
 
 def main():
     root = tk.Tk()
+    root.geometry("1200x700")  # Largeur x Hauteur
     app = CinemaApp(root)
     root.mainloop()
 

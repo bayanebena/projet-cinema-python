@@ -85,6 +85,24 @@ class GestionSalles:
         salle.affecter_film(film)
 
 
+def salles_par_defaut() -> GestionSalles:
+    gestion = GestionSalles()
+    try:
+        gestion.ajouter_salle(Salle(1, 100))
+        gestion.ajouter_salle(Salle(2, 80))
+        gestion.ajouter_salle(Salle(3, 120))
+        gestion.ajouter_salle(Salle(4, 60))
+        gestion.ajouter_salle(Salle(5, 150))
+        gestion.ajouter_salle(Salle(6, 90))
+        gestion.ajouter_salle(Salle(7, 110))
+        gestion.ajouter_salle(Salle(8, 70))
+        gestion.ajouter_salle(Salle(9, 130))
+        gestion.ajouter_salle(Salle(10, 140))
+    except Exception:
+        pass
+    return gestion
+
+
 def main():
     """
     Petit scénario de test pour vérifier que tout fonctionne :

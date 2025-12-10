@@ -5,6 +5,7 @@ Fonction : gestion des séances et des réservations.
 """
 from typing import List, Dict
 from dataclasses import dataclass
+import string
 
 from film import Film, FilmInexistantError
 from salle import Salle
@@ -18,11 +19,11 @@ class SallePleineError(Exception):
 @dataclass
 class Reservation:
     client_nom: str
-    nb_places: int
+    place: str  
     seance_id: int
 
     def __str__(self) -> str:
-        return f"Réservation: {self.client_nom} - {self.nb_places} place(s) (séance #{self.seance_id})"
+        return f"Réservation: {self.client_nom} - Place {self.place} (séance #{self.seance_id})"
 
 
 class Seance:
@@ -37,18 +38,36 @@ class Seance:
         self.salle = salle
         self.horaire = horaire
         self._reservations: List[Reservation] = []
-        self._places_reservees = 0
+        self._places_reservees = set()  # set de places réservées, ex: {'A1', 'B2'}
+        self.plan = self._generer_plan_salle()
+
+    def _generer_plan_salle(self):
+        nb_places = self.salle.capacite
+        colonnes = 12  # nombre de colonnes par défaut
+        lignes = max(1, nb_places // colonnes + (1 if nb_places % colonnes else 0))
+        alphabet = string.ascii_uppercase
+        plan = []
+        cpt = 0
+        for i in range(lignes):
+            row = []
+            for j in range(colonnes):
+                if cpt < nb_places:
+                    row.append(f"{alphabet[i]}{j+1}")
+                    cpt += 1
+            plan.append(row)
+        return plan
 
     def places_disponibles(self) -> int:
-        return self.salle.capacite - self._places_reservees
+        return self.salle.capacite - len(self._places_reservees)
 
-    def reserver(self, client_nom: str, nb_places: int) -> Reservation:
-        if nb_places <= 0:
-            raise ValueError("Le nombre de places doit être strictement positif.")
-        if nb_places > self.places_disponibles():
-            raise SallePleineError("Pas assez de places disponibles pour cette séance.")
-        self._places_reservees += nb_places
-        r = Reservation(client_nom, nb_places, self.id)
+    def est_place_disponible(self, place: str) -> bool:
+        return place not in self._places_reservees
+
+    def reserver(self, client_nom: str, place: str) -> Reservation:
+        if not self.est_place_disponible(place):
+            raise SallePleineError(f"La place {place} n'est pas disponible.")
+        self._places_reservees.add(place)
+        r = Reservation(client_nom, place, self.id)
         self._reservations.append(r)
         return r
 
@@ -95,8 +114,8 @@ if __name__ == "__main__":
     se = gs.creer_seance(f, s, "2025-12-31 20:00")
     print(se)
     try:
-        se.reserver("Alice", 3)
-        se.reserver("Bob", 8)
+        se.reserver("Alice", "A1")
+        se.reserver("Bob", "A2")
     except Exception as e:
         print("Erreur:", e)
     print(se)
