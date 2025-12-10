@@ -5,6 +5,8 @@ Fonction : gestion des films (sans les salles ni les réservations).
 """
 
 from typing import Optional, Dict, List
+import csv
+import os
 
 
 class FilmDejaExistantError(Exception):
@@ -58,6 +60,24 @@ class GestionFilms:
 
     def lister_films(self) -> List[Film]:
         return list(self._films.values())
+
+
+def charger_films_csv(path_csv: str) -> GestionFilms:
+    gestion = GestionFilms()
+    if not os.path.exists(path_csv):
+        return gestion
+    with open(path_csv, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            try:
+                titre = row['titre']
+                duree = int(row['duree'])
+                genre = row.get('genre', None)
+                film = Film(titre, duree, genre)
+                gestion.ajouter_film(film)
+            except Exception:
+                pass  # Ignore les lignes invalides
+    return gestion
 
 
 if __name__ == "__main__":
