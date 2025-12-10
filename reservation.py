@@ -12,14 +12,17 @@ from salle import Salle
 
 
 class SallePleineError(Exception):
-    """Levée lorsqu'on tente de réserver plus de places que la capacité restante."""
+    """Exception levée lorsqu'on tente de réserver une place déjà prise ou que la salle est pleine."""
     pass
 
 
 @dataclass
 class Reservation:
+    """
+    Représente une réservation pour une séance, pour une place précise.
+    """
     client_nom: str
-    place: str  
+    place: str  # ex: H12
     seance_id: int
 
     def __str__(self) -> str:
@@ -27,9 +30,9 @@ class Reservation:
 
 
 class Seance:
-    """Représente une séance : un film projeté dans une salle à un horaire donné.
-
-    La gestion des places réservées est tenue ici.
+    """
+    Représente une séance : un film projeté dans une salle à un horaire donné.
+    Gère le plan de la salle et les réservations individuelles par place.
     """
 
     def __init__(self, seance_id: int, film: Film, salle: Salle, horaire: str):
@@ -42,6 +45,9 @@ class Seance:
         self.plan = self._generer_plan_salle()
 
     def _generer_plan_salle(self):
+        """
+        Génère le plan de la salle sous forme de liste de listes, chaque place est identifiée par une lettre et un numéro.
+        """
         nb_places = self.salle.capacite
         colonnes = 12  # nombre de colonnes par défaut
         lignes = max(1, nb_places // colonnes + (1 if nb_places % colonnes else 0))
@@ -58,12 +64,15 @@ class Seance:
         return plan
 
     def places_disponibles(self) -> int:
+        """Retourne le nombre de places encore disponibles pour la séance."""
         return self.salle.capacite - len(self._places_reservees)
 
     def est_place_disponible(self, place: str) -> bool:
+        """Vérifie si une place donnée est disponible."""
         return place not in self._places_reservees
 
     def reserver(self, client_nom: str, place: str) -> Reservation:
+        """Réserve une place précise pour un client, lève une exception si la place est déjà prise."""
         if not self.est_place_disponible(place):
             raise SallePleineError(f"La place {place} n'est pas disponible.")
         self._places_reservees.add(place)
@@ -72,9 +81,11 @@ class Seance:
         return r
 
     def lister_reservations(self) -> List[Reservation]:
+        """Retourne la liste des réservations pour cette séance."""
         return list(self._reservations)
 
     def __str__(self) -> str:
+        # Affiche les infos principales de la séance
         return (
             f"Séance #{self.id} : {self.film.titre} - Salle {self.salle.numero} - "
             f"Horaire: {self.horaire} - Places dispo: {self.places_disponibles()}/{self.salle.capacite}"
@@ -82,24 +93,29 @@ class Seance:
 
 
 class GestionSeances:
-    """Gère l'ensemble des séances."""
+    """
+    Gère l'ensemble des séances du cinéma.
+    """
 
     def __init__(self):
         self._seances: Dict[int, Seance] = {}
         self._next_id = 1
 
     def creer_seance(self, film: Film, salle: Salle, horaire: str) -> Seance:
+        """Crée une nouvelle séance avec un film, une salle et un horaire."""
         s = Seance(self._next_id, film, salle, horaire)
         self._seances[self._next_id] = s
         self._next_id += 1
         return s
 
     def get_seance(self, seance_id: int) -> Seance:
+        """Retourne la séance par son identifiant, lève une exception si elle n'existe pas."""
         if seance_id not in self._seances:
             raise KeyError(f"La séance #{seance_id} n'existe pas.")
         return self._seances[seance_id]
 
     def lister_seances(self) -> List[Seance]:
+        """Retourne la liste de toutes les séances enregistrées."""
         return list(self._seances.values())
 
 

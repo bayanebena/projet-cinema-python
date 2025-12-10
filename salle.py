@@ -17,19 +17,23 @@ from film import Film, GestionFilms
 
 
 class SalleDejaExistanteError(Exception):
+    """Exception levée si on tente d'ajouter une salle déjà existante."""
     pass
 
 
 class SalleInexistanteError(Exception):
+    """Exception levée si on tente d'accéder à une salle qui n'existe pas."""
     pass
 
 
 class Salle:
     """
     Représente une salle de cinéma pouvant projeter un film.
+    Chaque salle a un numéro, une capacité et peut être associée à un film.
     """
 
     def __init__(self, numero: int, capacite: int):
+        # Vérifie que la capacité est positive
         if capacite <= 0:
             raise ValueError("La capacité d'une salle doit être strictement positive.")
 
@@ -38,12 +42,11 @@ class Salle:
         self.film: Optional[Film] = None  # film actuellement projeté dans la salle
 
     def affecter_film(self, film: Film) -> None:
-        """
-        Associe un film à la salle.
-        """
+        """Associe un film à la salle."""
         self.film = film
 
     def __str__(self) -> str:
+        # Affiche la salle avec le film projeté ou indique qu'aucun film n'est projeté
         if self.film:
             return f"Salle {self.numero} ({self.capacite} places) - Film: {self.film.titre}"
         else:
@@ -60,32 +63,37 @@ class GestionSalles:
         self._salles: Dict[int, Salle] = {}
 
     def ajouter_salle(self, salle: Salle) -> None:
+        """Ajoute une salle au système, lève une exception si le numéro existe déjà."""
         if salle.numero in self._salles:
             raise SalleDejaExistanteError(f"La salle {salle.numero} existe déjà.")
         self._salles[salle.numero] = salle
 
     def supprimer_salle(self, numero: int) -> None:
+        """Supprime une salle par son numéro, lève une exception si elle n'existe pas."""
         if numero not in self._salles:
             raise SalleInexistanteError(f"La salle {numero} n'existe pas.")
         del self._salles[numero]
 
     def get_salle(self, numero: int) -> Salle:
+        """Retourne la salle par son numéro, lève une exception si elle n'existe pas."""
         if numero not in self._salles:
             raise SalleInexistanteError(f"La salle {numero} n'existe pas.")
         return self._salles[numero]
 
     def lister_salles(self) -> List[Salle]:
+        """Retourne la liste de toutes les salles enregistrées."""
         return list(self._salles.values())
 
     def affecter_film_a_salle(self, numero_salle: int, film: Film) -> None:
-        """
-        Associe un film à une salle.
-        """
+        """Associe un film à une salle donnée par son numéro."""
         salle = self.get_salle(numero_salle)
         salle.affecter_film(film)
 
 
 def salles_par_defaut() -> GestionSalles:
+    """
+    Crée un ensemble de 10 salles par défaut pour l'initialisation du système.
+    """
     gestion = GestionSalles()
     try:
         gestion.ajouter_salle(Salle(1, 100))

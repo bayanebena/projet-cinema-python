@@ -1,40 +1,76 @@
-# Projet Python S1 – Application de Gestion de Cinéma
+# Application de gestion de cinéma
 
-Ce dépôt contient la partie réalisée par la Bayane, dédiée à la gestion des films et des salles dans le cadre du projet de cinéma du module Python S1.
+## Description
+Ce projet est une application Python permettant de gérer un cinéma : films, salles, séances, réservations. Il propose une interface graphique moderne (Tkinter) pour le client et le gestionnaire, avec gestion des places individuelles et plan de salle interactif.
 
-## Objectifs du projet
+## Fonctionnalités principales
+- **Gestionnaire** :
+  - Ajouter/supprimer des films et des salles
+  - Affecter un film à une salle
+  - Créer des séances (film, salle, horaire)
+  - Visualiser les films et salles existants
+- **Client** :
+  - Voir les films à l'affiche
+  - Voir les séances disponibles
+  - Réserver une place sur le plan de salle 
+  - Saisie du nom et confirmation de la réservation
+- **Gestion des exceptions** :
+  - Salle pleine, film inexistant, saisie invalide, etc.
+- **Données initiales** :
+  - 10 salles et 10 films sont chargés automatiquement au lancement
+  - 5 séances sont créées par défaut
 
-- Développer une application modulaire en Python.
-- Utiliser la programmation orientée objet (POO).
-- Créer des interactions cohérentes entre plusieurs classes.
-- Préparer une base solide pour les autres parties du projet (gestion des réservations, gestion des séances, etc.).
+## Installation
+### Prérequis
+- Python 3.7 ou plus recommandé
+- Tkinter (installé par défaut sur Windows, à installer sur Ubuntu si besoin)
 
-## Contenu du dépôt
+#### Ubuntu
+```bash
+sudo apt update
+sudo apt install python3 python3-tk
+```
 
-Ce dépôt contient trois fichiers principaux :
+#### Windows
+- Installez Python depuis [python.org](https://www.python.org/downloads/)
+- Tkinter est inclus par défaut
 
-### 1. `film.py`
-Module responsable de la gestion des films.  
-Il contient :
-- La classe `Film` (titre, durée, genre).
-- La classe `GestionFilms` permettant d’ajouter, supprimer, rechercher et lister les films enregistrés.
+## Lancement
+Dans le dossier du projet, lancez simplement :
+```bash
+python3 gui.py
+```
+Ou sur Windows :
+```bat
+python gui.py
+```
 
-### 2. `salle.py`
-Module responsable de la gestion des salles.  
-Il contient :
-- La classe `Salle` (numéro, capacité, film projeté).
-- La classe `GestionSalles` permettant d’ajouter, supprimer, rechercher et lister les salles.
-- Une méthode permettant d’affecter un film à une salle.
-
-### 3. `menu.py`
-Programme principal permettant d’utiliser la partie Personne 1 de manière interactive via un menu texte.  
-Ce menu permet :
-- D’ajouter un film.
-- D’ajouter une salle.
-- De lister les films.
-- De lister les salles.
-- D’affecter un film à une salle.
-- D’afficher les salles avec les films projetés.
+## Utilisation
+- **Au lancement** :
+  - Choisissez le mode Client ou Gestionnaire
+- **Client** :
+  - Voir les films et séances
+  - Cliquez sur une séance pour afficher le plan de salle
+  - Cliquez sur une place verte pour réserver, saisissez votre nom
+- **Gestionnaire** :
+  - Ajoutez/supprimez films et salles
+  - Affectez un film à une salle
+  - Créez des séances
+  - Les listes de films et salles sont affichées avant chaque action
 
 ## Structure du projet
+- `film.py` : gestion des films
+- `salle.py` : gestion des salles
+- `reservation.py` : gestion des séances et réservations
+- `gui.py` : interface graphique principale
+- `films_init.csv` : films chargés au démarrage
+- `README.md` : ce guide
+
+## Remarques
+- Les couleurs du plan de salle :
+  - **Vert** : place disponible
+  - **Rouge** : place réservée
+- Les données sont en mémoire (pas de base de données)
+- Compatible Windows et Ubuntu
+
 

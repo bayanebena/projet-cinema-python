@@ -9,6 +9,7 @@ from salle import salles_par_defaut
 
 class CinemaApp:
     def __init__(self, root):
+        # Initialise l'application graphique et les gestionnaires de films, salles, séances
         self.root = root
         self.root.title("Cinéma - Application Graphique")
         chemin_csv = os.path.join(os.path.dirname(__file__), "films_init.csv")
@@ -19,6 +20,7 @@ class CinemaApp:
         self.menu_principal()
 
     def creer_seances_par_defaut(self):
+        # Crée 5 séances par défaut au lancement
         films = self.gestion_films.lister_films()
         salles = self.gestion_salles.lister_salles()
         horaires = [
@@ -35,6 +37,7 @@ class CinemaApp:
                 pass
 
     def menu_principal(self):
+        # Affiche le menu principal (choix client/gestionnaire)
         self.clear()
         tk.Label(self.root, text="Bienvenue au Cinéma!", font=("Arial", 16)).pack(pady=10)
         tk.Button(self.root, text="Client", width=20, command=self.menu_client).pack(pady=5)
@@ -42,6 +45,7 @@ class CinemaApp:
         tk.Button(self.root, text="Quitter", width=20, command=self.root.quit).pack(pady=5)
 
     def menu_client(self):
+        # Affiche le menu client
         self.clear()
         tk.Label(self.root, text="Menu Client", font=("Arial", 14)).pack(pady=10)
         tk.Button(self.root, text="Voir les films à l'affiche", width=30, command=self.afficher_films).pack(pady=5)
@@ -49,6 +53,7 @@ class CinemaApp:
         tk.Button(self.root, text="Retour", width=30, command=self.menu_principal).pack(pady=5)
 
     def menu_gestionnaire(self):
+        # Affiche le menu gestionnaire
         self.clear()
         tk.Label(self.root, text="Menu Gestionnaire", font=("Arial", 14)).pack(pady=10)
         tk.Button(self.root, text="Ajouter un film", width=30, command=self.ajouter_film).pack(pady=5)
@@ -60,10 +65,12 @@ class CinemaApp:
         tk.Button(self.root, text="Retour", width=30, command=self.menu_principal).pack(pady=5)
 
     def clear(self):
+        # Efface tous les widgets de la fenêtre
         for widget in self.root.winfo_children():
             widget.destroy()
 
     def afficher_films(self):
+        # Affiche la liste des films à l'affiche
         self.clear()
         tk.Label(self.root, text="Films à l'affiche", font=("Arial", 14)).pack(pady=10)
         films = self.gestion_films.lister_films()
@@ -75,6 +82,7 @@ class CinemaApp:
         tk.Button(self.root, text="Retour", command=self.menu_client).pack(pady=10)
 
     def afficher_seances(self):
+        # Affiche la liste des séances disponibles (films existants uniquement)
         self.clear()
         tk.Label(self.root, text="Séances", font=("Arial", 14)).pack(pady=10)
         # On ne garde que les séances dont le film existe encore
@@ -89,6 +97,7 @@ class CinemaApp:
         tk.Button(self.root, text="Retour", command=self.menu_client).pack(pady=10)
 
     def afficher_plan_salle(self, seance):
+        # Affiche le plan de la salle pour une séance donnée, avec code couleur
         self.clear()
         tk.Label(self.root, text=f"Plan de la salle {seance.salle.numero} - {seance.film.titre}", font=("Arial", 13)).pack(pady=5)
         tk.Label(self.root, text=f"Horaire : {seance.horaire}", font=("Arial", 10)).pack(pady=2)
@@ -119,6 +128,7 @@ class CinemaApp:
         tk.Button(self.root, text="Retour", command=self.afficher_seances).pack(pady=10)
 
     def reserver_place_graphique(self, seance, place):
+        # Permet au client de réserver une place précise dans le plan de salle
         confirm = messagebox.askyesno("Confirmation", f"Voulez-vous réserver la place {place} ?")
         if not confirm:
             return
@@ -183,6 +193,7 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def ajouter_film(self):
+        # Ajoute un film via une boîte de dialogue
         titre = simpledialog.askstring("Ajouter Film", "Titre du film:")
         try:
             duree = simpledialog.askinteger("Ajouter Film", "Durée (min):")
@@ -203,6 +214,7 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def supprimer_film(self):
+        # Supprime un film après affichage de la liste
         films = self.gestion_films.lister_films()
         if not films:
             messagebox.showinfo("Info", "Aucun film à supprimer.")
@@ -240,6 +252,7 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def supprimer_salle(self):
+        # Supprime une salle après affichage de la liste
         salles = self.gestion_salles.lister_salles()
         if not salles:
             messagebox.showinfo("Info", "Aucune salle à supprimer.")
@@ -256,6 +269,7 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def affecter_film_salle(self):
+        # Affecte un film à une salle après affichage des listes
         films = self.gestion_films.lister_films()
         salles = self.gestion_salles.lister_salles()
         if not films:
@@ -285,6 +299,7 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
     def creer_seance(self):
+        # Crée une séance après affichage des films et salles
         films = self.gestion_films.lister_films()
         salles = self.gestion_salles.lister_salles()
         if not films:
@@ -315,6 +330,7 @@ class CinemaApp:
             messagebox.showerror("Erreur", str(e))
 
 def main():
+    # Lance l'application graphique avec une fenêtre élargie
     root = tk.Tk()
     root.geometry("1200x700")  # Largeur x Hauteur
     app = CinemaApp(root)
