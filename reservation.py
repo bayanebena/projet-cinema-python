@@ -84,6 +84,25 @@ class Seance:
         """Retourne la liste des réservations pour cette séance."""
         return list(self._reservations)
 
+    def annuler_reservation(self, client_nom: str, place: str) -> bool:
+        """Annule la réservation pour le client et la place donnée. Retourne True si annulée."""
+        # Trouver la réservation correspondante
+        to_remove = None
+        for r in self._reservations:
+            if r.client_nom == client_nom and r.place == place:
+                to_remove = r
+                break
+        if to_remove:
+            try:
+                self._reservations.remove(to_remove)
+            except ValueError:
+                pass
+            # libérer la place
+            if place in self._places_reservees:
+                self._places_reservees.remove(place)
+            return True
+        return False
+
     def __str__(self) -> str:
         # Affiche les infos principales de la séance
         return (

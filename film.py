@@ -24,7 +24,7 @@ class Film:
     Chaque film a un titre, une durée et un genre.
     """
 
-    def __init__(self, titre: str, duree: int, genre: Optional[str] = None):
+    def __init__(self, titre: str, duree: int, genre: Optional[str] = None, affiche: Optional[str] = None):
         # Vérifie que la durée est positive
         if duree <= 0:
             raise ValueError("La durée d'un film doit être strictement positive.")
@@ -32,6 +32,8 @@ class Film:
         self.titre = titre
         self.duree = duree
         self.genre = genre
+        # chemin relatif ou None vers une image d'affiche (png/jpg/gif)
+        self.affiche = affiche
 
     def __str__(self) -> str:
         # Affiche le film avec son genre si disponible
@@ -84,7 +86,8 @@ def charger_films_csv(path_csv: str) -> GestionFilms:
                 titre = row['titre']
                 duree = int(row['duree'])
                 genre = row.get('genre', None)
-                film = Film(titre, duree, genre)
+                affiche = row.get('affiche', None)
+                film = Film(titre, duree, genre, affiche)
                 gestion.ajouter_film(film)
             except Exception:
                 pass  # Ignore les lignes invalides
