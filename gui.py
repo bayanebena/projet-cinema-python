@@ -254,6 +254,38 @@ class CinemaApp:
         canvas.bind('<Configure>', _on_canvas_config)
         wrapper.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
 
+        # Activer le défilement avec la molette / pavé tactile lorsque le curseur
+        # survole la zone d'affichage des films. Utilise <MouseWheel> (Windows/Mac)
+        # et <Button-4/5> (Linux) comme fallback.
+        def _on_mousewheel(event):
+            try:
+                # X11: Button-4 (up) / Button-5 (down)
+                if hasattr(event, 'num') and event.num in (4, 5):
+                    delta = -1 if event.num == 4 else 1
+                    canvas.yview_scroll(delta, 'units')
+                else:
+                    # Windows / Mac
+                    delta = int(-1 * (event.delta / 120))
+                    canvas.yview_scroll(delta, 'units')
+            except Exception:
+                pass
+
+        def _bind_scroll(_):
+            canvas.bind_all('<MouseWheel>', _on_mousewheel)
+            canvas.bind_all('<Button-4>', _on_mousewheel)
+            canvas.bind_all('<Button-5>', _on_mousewheel)
+
+        def _unbind_scroll(_):
+            try:
+                canvas.unbind_all('<MouseWheel>')
+                canvas.unbind_all('<Button-4>')
+                canvas.unbind_all('<Button-5>')
+            except Exception:
+                pass
+
+        wrapper.bind('<Enter>', _bind_scroll)
+        wrapper.bind('<Leave>', _unbind_scroll)
+
         list_frame = tk.Frame(wrapper, bg=self.bg_color)
         list_frame.pack(anchor='center', pady=10)
 
@@ -284,7 +316,7 @@ class CinemaApp:
             tk.Label(item, text=f.titre, bg=self.bg_color, fg=NEON_VIOLET, wraplength=160, justify='center', font=("Orbitron", 11, "bold")).pack(pady=(6,0), anchor='center')
             if getattr(f, 'genre', None):
                 tk.Label(item, text=f.genre, bg=self.bg_color, fg=TEXT_LIGHT, font=BODY_FONT).pack(anchor='center')
-            tk.Button(item, text="Voir séances", command=self.afficher_seances, bg=BUTTON_BG, fg=BUTTON_FG, font=SUBTITLE_FONT).pack(pady=6)
+            tk.Button(item, text="Voir séances", command=lambda film=f: self.afficher_seances(film), bg=BUTTON_BG, fg=BUTTON_FG, font=SUBTITLE_FONT).pack(pady=6)
 
         # for nicer layout, ensure even columns
         for c in range(cols):
@@ -357,17 +389,31 @@ class CinemaApp:
 
         tk.Button(self.root, text="Retour", command=self.menu_client_options, bg=BUTTON_BG, fg=BUTTON_FG, font=SUBTITLE_FONT).pack(pady=10)
 
-    def afficher_seances(self):
-        # Affiche la liste des séances disponibles (films existants uniquement)
+    def afficher_seances(self, film=None):
+        # Affiche la liste des séances disponibles ; si `film` est fourni, on n'affiche
+        # que les séances pour ce film.
         self.clear()
-        tk.Label(self.root, text="Séances", font=SUBTITLE_FONT, bg=self.bg_color, fg=TEXT_LIGHT).pack(pady=10)
+        title_text = f"Séances - {film.titre}" if film else "Séances"
+        tk.Label(self.root, text=title_text, font=SUBTITLE_FONT, bg=self.bg_color, fg=TEXT_LIGHT).pack(pady=10)
         # On ne garde que les séances dont le film existe encore
         films_existants = set(f.titre for f in self.gestion_films.lister_films())
-        seances = [s for s in self.gestion_seances.lister_seances() if s.film.titre in films_existants]
-        if not seances:
-            tk.Label(self.root, text="Aucune séance disponible.", bg=self.bg_color, fg=TEXT_LIGHT, font=BODY_FONT).pack()
+        all_seances = [s for s in self.gestion_seances.lister_seances() if s.film.titre in films_existants]
+
+        if film:
+            seances = [s for s in all_seances if s.film.titre == film.titre]
         else:
-            tk.Label(self.root, text="Cliquez sur une séance pour voir le plan de salle et réserver :", font=BODY_FONT, bg=self.bg_color, fg=TEXT_LIGHT).pack(pady=5)
+            seances = all_seances
+
+        if not seances:
+            if film:
+                tk.Label(self.root, text="Aucune séance enregistrée pour ce film.", bg=self.bg_color, fg=TEXT_LIGHT, font=BODY_FONT).pack()
+            else:
+                tk.Label(self.root, text="Aucune séance disponible.", bg=self.bg_color, fg=TEXT_LIGHT, font=BODY_FONT).pack()
+        else:
+            if film:
+                tk.Label(self.root, text=f"Séances pour {film.titre} :", font=BODY_FONT, bg=self.bg_color, fg=TEXT_LIGHT).pack(pady=5)
+            else:
+                tk.Label(self.root, text="Cliquez sur une séance pour voir le plan de salle et réserver :", font=BODY_FONT, bg=self.bg_color, fg=TEXT_LIGHT).pack(pady=5)
             for s in seances:
                 tk.Button(self.root, text=str(s), wraplength=400, command=lambda seance=s: self.afficher_plan_salle(seance), bg=BUTTON_BG, fg=BUTTON_FG, font=BODY_FONT).pack(pady=2, fill='x')
         tk.Button(self.root, text="Retour", command=self.menu_client_options, bg=BUTTON_BG, fg=BUTTON_FG, font=SUBTITLE_FONT).pack(pady=10)
